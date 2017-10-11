@@ -1,43 +1,50 @@
 <template>
     <div class="recommend-wrapper">
-        <div class="recommend-content">
-            <div class="slider-wrapper" v-if="recommends.length">
-                <slider>
-                    <div v-for="item in recommends">
-                        <a :href="item.linkUrl">
-                            <img :src="item.picUrl">
-                        </a>
-                    </div>
-                </slider>
-            </div>
-            <div class="recommend-list">
-                <h1 class="list-title">热门歌单推荐</h1>
-                <ul>
-                    <li class="item" v-for="(music,index) in musicList">
-                        <div class="icon">
-                            <img width="60" height="60" :src="music.picUrl">
+        <scroll class="recommend-content" :data="musicList" ref="scroll">
+            <!-- 滚动内容 -->
+            <div class="scroll-content">
+                <div class="slider-wrapper" v-if="sliderList.length">
+                    <slider>
+                        <div v-for="item in sliderList">
+                            <a :href="item.linkUrl">
+                                <img class="needsclick" @load="loadImage" :src="item.picUrl">
+                            </a>
                         </div>
-                        <div class="text">
-                            <h2 class="name" v-html="music.songListAuthor"></h2>
-                            <p class="desc" v-html="music.songListDesc"></p>
-                        </div>
-                    </li>
-                </ul>
+                    </slider>
+                </div>
+                <div class="recommend-list">
+                    <h1 class="list-title">热门歌单推荐</h1>
+                    <ul>
+                        <li class="item" v-for="(music,index) in musicList">
+                            <div class="icon">
+                                <img width="60" height="60" v-lazy="music.picUrl">
+                            </div>
+                            <div class="text">
+                                <h2 class="name" v-html="music.songListAuthor"></h2>
+                                <p class="desc" v-html="music.songListDesc"></p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
+            <!-- 正在加载 -->
+            <div class="loading-container" v-show="!musicList.length"></div>
+        </scroll>
     </div>
 </template>
 
 <script type="text/ecmascript-6">
     import Slider from 'base/slider/slider';
+    import Scroll from 'base/scroll/scroll';
+    import Loading from 'base/loading/loading';
     import {getRecommend} from 'api/recommend';
     import {ERR_OK} from 'api/config';
 
     export default{
         data(){
             return {
-                recommends: [],
-                musicList: []
+                musicList: [],
+                sliderList: []
             }
         },
         created(){
@@ -47,15 +54,22 @@
             _getRecommend(){
                 getRecommend().then((res) => {
                     if (res.code === ERR_OK) {
-                        this.recommends = res.data.slider;
+                        this.sliderList = res.data.slider;
                         this.musicList = res.data.songList;
-                        console.log(this.musicList);
                     }
                 })
+            },
+            loadImage(){
+                if (!this.checkLoaded) {
+                    this.$refs.scroll.refresh();
+                }
+                this.checkLoaded = true;
             }
         },
         components: {
-            Slider
+            Slider,
+            Scroll,
+            Loading
         }
     }
 </script>

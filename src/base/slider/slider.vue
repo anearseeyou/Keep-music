@@ -1,5 +1,5 @@
 <template>
-    <div class="slider-wrapper" ref="slider">
+    <div class="slider" ref="slider">
         <div class="slider-group" ref="sliderGroup">
             <slot></slot>
         </div>
@@ -128,7 +128,7 @@
 <style scoped lang="stylus" rel="stylesheet/stylus">
     @import "~common/stylus/variable"
 
-    .slider-wrapper
+    .slider
         min-height: 1px
         .slider-group
             position: relative
