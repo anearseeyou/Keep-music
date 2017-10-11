@@ -1,6 +1,8 @@
 <template>
     <div class="singer-wrapper">
+        哈哈哈哈哈
     </div>
+
 </template>
 
 <script type="text/ecmascript-6">
