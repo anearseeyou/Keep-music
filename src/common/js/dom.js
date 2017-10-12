@@ -18,3 +18,20 @@ export function hasClass(el, className) {
     return reg.test(el.className);
 }
 
+/**
+ * 取值和设置
+ * @param el 元素
+ * @param name 属性名
+ * @param val 扩展 是否有值
+ */
+export function getAttrOrSetAttr(el, name, val) {
+    const prefix = 'data-';
+    name = prefix + name;
+
+    if (val) {
+        return el.setAttribute(name, val);
+    }
+    else {
+        return el.getAttribute(name);
+    }
+}

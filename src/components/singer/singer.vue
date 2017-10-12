@@ -1,12 +1,13 @@
 <template>
     <div class="singer-wrapper">
-        哈哈哈哈哈
+        <list-view :data="singers"></list-view>
     </div>
 
 </template>
 
 <script type="text/ecmascript-6">
     import Singer from 'common/js/singer';
+    import ListView from 'base/listview/listview';
     import {getSingerList} from 'api/singer';
     import {ERR_OK} from 'api/config';
 
@@ -26,8 +27,7 @@
             _getSingerList() {  // 获取歌手数据
                 getSingerList().then((res) => {
                     if (res.code === ERR_OK) {
-                        this.singers = res.data.list;
-                        console.log(this._normalizeSinger(this.singers));
+                        this.singers = this._normalizeSinger(res.data.list);
                     }
                 });
             },
@@ -58,9 +58,27 @@
                         }
                     ));
                 });
-                // 因为遍历对象得到的结果是无序的 为了得到有序列表 我们要处理给map排序
 
+                // 因为遍历对象得到的结果是无序的 为了得到有序列表 我们要处理给map排序
+                let hot = [];
+                let ret = [];
+                for (let key in map) {
+                    let val = map[key];
+                    if (val.title.match(/[a-zA-Z]/)) {
+                        ret.push(val);
+                    }
+                    else if (val.title === HOT_NAME) {
+                        hot.push(val);
+                    }
+                }
+                ret.sort((a, b) => {  // 排序
+                    return a.title.charCodeAt(0) - b.title.charCodeAt(0)
+                });
+                return hot.concat(ret);
             }
+        },
+        components: {
+            ListView
         }
     }
 </script>
