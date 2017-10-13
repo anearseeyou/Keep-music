@@ -3,6 +3,7 @@ import 'babel-polyfill';
 import Vue from 'vue';
 import App from './App';
 import router from './router';
+import store from './store';
 import fastclick from 'fastclick';
 import axios from 'axios';
 import VueLazyLoad from 'vue-lazyload';
@@ -23,5 +24,6 @@ Vue.prototype.$ajax = axios;
 new Vue({
     el: '#app',
     router,
+    store,
     render: h => h(App)
 })

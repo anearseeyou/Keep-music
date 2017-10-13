@@ -1,10 +1,32 @@
 // 导入模版
 import Vue from 'vue';
 import Router from 'vue-router';
-import Ranking from 'components/ranking/ranking';
-import Recommend from 'components/recommend/recommend';
-import Search from 'components/search/search';
-import Singer from 'components/singer/singer';
+
+const Recommend = (resolve) => {
+    import('components/recommend/recommend').then((module) => {
+        resolve(module)
+    })
+}
+const Singer = (resolve) => {
+    import('components/singer/singer').then((module) => {
+        resolve(module)
+    })
+}
+const Ranking = (resolve) => {
+    import('components/ranking/ranking').then((module) => {
+        resolve(module)
+    })
+}
+const Search = (resolve) => {
+    import('components/search/search').then((module) => {
+        resolve(module)
+    })
+}
+const SingerDetail = (resolve) => {
+    import('components/singer-detail/singer-detail').then((module) => {
+        resolve(module)
+    })
+}
 
 // 初始化路由
 Vue.use(Router);
@@ -22,7 +44,13 @@ export default new Router({
         },
         {
             path: '/singer',
-            component: Singer
+            component: Singer,
+            children: [
+                {
+                    path: ':id',
+                    component: SingerDetail
+                }
+            ]
         },
         {
             path: '/ranking',
