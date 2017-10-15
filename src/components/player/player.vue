@@ -27,9 +27,17 @@
                     </div>
                 </div>
                 <div class="bottom">
+                    <div class="progress-wrapper">
+                        <span class="time time-l">{{formate(currentTime)}}</span>
+                        <div class="progress-bar-wrapper">
+                            <progress-bar :percent="percent" @percentChange="onProgressBarChange">
+                            </progress-bar>
+                        </div>
+                        <span class="time time-r">{{formate(currentSong.duration)}}</span>
+                    </div>
                     <div class="operators">
-                        <div class="icon i-left">
-                            <i class="icon-sequence"></i>
+                        <div class="icon i-left" @click="changeMode">
+                            <i :class="iconMode"></i>
                         </div>
                         <div class="icon i-left" :class="disableClass">
                             <i class="icon-prev" @click.stop="prev"></i>
@@ -58,7 +66,9 @@
                     <p class="desc" v-html="currentSong.singer"></p>
                 </div>
                 <div class="control">
-                    <i :class="miniIcon" @click.stop="togglePlaying"></i>
+                    <progress-cicle :radius="radius" :percent="percent">
+                        <i :class="miniIcon" @click.stop="togglePlaying" class="icon-mini"></i>
+                    </progress-cicle>
                 </div>
                 <div class="control">
                     <i class="icon-playlist"></i>
@@ -66,7 +76,13 @@
             </div>
         </transition>
 
-        <audio :src="currentSong.url" ref="audio" @canplay="ready" @error="error"></audio>
+        <audio :src="currentSong.url"
+               ref="audio"
+               @canplay="ready"
+               @error="error"
+               @timeupdate="uptateTime"
+               @ended="end">
+        </audio>
     </div>
 </template>
 
@@ -74,6 +90,10 @@
     import {mapGetters, mapMutations} from 'vuex';
     import animations from 'create-keyframe-animation';
     import {prefixStyle} from 'common/js/dom';
+    import ProgressBar from 'base/progress-bar/progress-bar';
+    import ProgressCicle from 'base/progress-cicle/progress-cicle';
+    import {playMode} from 'common/js/config';
+    import {shuffle} from 'common/js/util';
 
     const transform = prefixStyle('transform');
 
@@ -85,23 +105,33 @@
             miniIcon(){
                 return this.playing ? 'icon-pause-mini' : 'icon-play-mini';
             },
+            iconMode(){
+                return this.mode === playMode.sequence ? 'icon-sequence' : this.mode === playMode.loop ? 'icon-loop' : 'icon-random';
+            },
             cdClass(){
                 return this.playing ? 'play' : 'play pause';
             },
             disableClass(){
                 return this.songReady ? '' : 'disable';
             },
+            percent(){
+                return this.currentTime / this.currentSong.duration;
+            },
             ...mapGetters([
                 'fullScreen',
                 'playlist',
                 'currentSong',
                 'playing',
-                'currentIndex'
+                'currentIndex',
+                'mode',
+                'squenceList'
             ])
         },
         data(){
             return {
-                songReady: false
+                songReady: false,
+                currentTime: 0,
+                radius: 32
             }
         },
         methods: {
@@ -191,8 +221,62 @@
             ready(){
                 this.songReady = true;
             },
+            end(){
+                if (this.mode === playMode.loop) {
+                    this.loop();
+                }
+                else {
+                    this.next();
+                }
+            },
+            loop(){
+                this.$refs.audio.currentTime = 0;
+                this.$refs.audio.play();
+            },
             error(){
                 this.songReady = true;
+            },
+            uptateTime(e){
+                this.currentTime = e.target.currentTime;
+            },
+            formate(interval){
+                interval = interval | 0   // | 0 是向下取整的意思
+                const minute = interval / 60 | 0;
+                const second = this._pad(interval % 60);
+                return `${minute}:${second}`;
+            },
+            onProgressBarChange(percent){
+                this.$refs.audio.currentTime = this.currentSong.duration * percent;
+                if (!this.playing) {
+                    this.togglePlaying();
+                }
+            },
+            changeMode(){
+                const mode = (this.mode + 1) % 3;
+                this.setPlayMode(mode);
+                let list = null;
+                if (mode === playMode.random) {
+                    list = shuffle(this.squenceList);
+                }
+                else {
+                    list = this.squenceList;
+                }
+                this.resetCurrentIndex(list);
+                this.setPlayList(list);
+            },
+            resetCurrentIndex(list){  // 重置列表的时候 保持当前的歌曲不变
+                let index = list.findIndex((item) => {  // findIndex ES6的语法 找到当前元素对应的索引
+                    return item.id === this.currentSong.id
+                })
+                this.setCurrentIndex(index);
+            },
+            _pad(num, n = 2){  // n代表字符串的第2位开始 补0
+                let len = num.toString().length;
+                while (len < n) {
+                    num = '0' + num;
+                    len++
+                }
+                return num;
             },
             _getPosAndScale(){  // 获取执行动画运行轨迹需要的位置和缩放比例
                 const targetWidth = 40;
@@ -212,11 +296,16 @@
             ...mapMutations({
                 setFullScreen: 'SET_FULL_SCREEN',
                 setPlayingState: 'SET_PLAYING_STATE',
-                setCurrentIndex: 'SET_CURRENT_INDEX'
+                setCurrentIndex: 'SET_CURRENT_INDEX',
+                setPlayMode: 'SET_PLAY_MODE',
+                setPlayList: 'SET_PLAYLIST'
             })
         },
         watch: {
-            currentSong(){
+            currentSong(newSong, oldSong){
+                if (newSong === oldSong) {
+                    return;
+                }
                 this.$nextTick(() => {  // Vue延时函数
                     this.$refs.audio.play();
                 })
@@ -227,6 +316,10 @@
                     newPlaying ? audio.play() : audio.pause();
                 })
             }
+        },
+        components: {
+            ProgressBar,
+            ProgressCicle
         }
     }
 </script>
